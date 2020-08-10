@@ -7,6 +7,6 @@ setup(name='FAIRSCAPE-Client',
       description='Python Client for FAIRSCAPE',
       author='Justin Niestroy',
       author_email='jcn4rh@virginia.edu',
-      packages=['FAIR'],
+      packages=['FAIR.FAIR'],
       install_requires=['requests'],
      )
