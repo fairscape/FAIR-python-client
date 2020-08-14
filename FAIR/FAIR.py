@@ -1,8 +1,16 @@
+#© 2020 By The Rector And Visitors Of The University Of Virginia
+
+#Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+#The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+#THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 import requests, json, os
+import hashlib
+
 
 FAIR_URL = 'https://clarklab.uvarc.io/'
 TOKEN = ''
-def upload_file(file_path,metadata,token = TOKEN):
+def upload_file(file_path,metadata,hash = '',token = TOKEN):
     """
     Uploads data with associated metadata using transfer service.
     Returns minted PID
@@ -20,11 +28,21 @@ def upload_file(file_path,metadata,token = TOKEN):
     if not os.path.exists(file_path):
         raise Exception('file_path must point to local file.')
 
+    if hash == '':
+        sha256_hash = hashlib.sha256()
+        with open(file_path,"rb") as f:
+            # Read and update hash string value in blocks of 4K
+            for byte_block in iter(lambda: f.read(4096),b""):
+                sha256_hash.update(byte_block)
+            print(sha256_hash.hexdigest())
+        hash = sha256_hash.hexdigest()
+
     upload_response = requests.post(
-        FAIR_URL + 'transfer/data/',
+        FAIR_URL + 'transfer/data',
         files = {
             'files':open(file_path,'rb'),
-            'metadata':json.dumps(metadata)
+            'metadata':json.dumps(metadata),
+            'sha256':hash
         },
         headers = {"Authorization": token}
     )
@@ -187,6 +205,7 @@ def compute(data_id,script_id,job_type,container_id = '',namespace = '99999',tok
     if job_type == 'custom':
         if container_id == '':
             raise Exception('Custom jobs require container id.')
+        job_type = 'job'
         job['containerID'] = container_id
 
 
